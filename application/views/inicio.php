@@ -24,26 +24,69 @@
   </head>
   <body>
     <div id="map"></div>
+    <div class="informacion">
+      <button style="margin-left: 15px;" id="ubicación">Mi ubicación</button>
+      <table>
+        <tr>
+          <td>Lugar:</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Latitud:</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Longitud:</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Pais:</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Ruta:</td>
+          <td><button id="ruta">Ver ruta</button></td>
+        </tr>
+
+
+      </table>
+
+    </div>
     <script>
     var base_url = "<?php echo base_url(); ?>";
     function initMap() 
     {
-   
-      //navigator.geolocation.getCurrentPosition(fn_ok, fn_error);;
 
-     // var divMapa = document.getElementById('map');
-     // function fn_error(){
-       // divMapa.innerHTML='Permite dar a conocer tu ubicación';
-      //}
-     // function fn_ok(respuesta){
-        //var lat = respuesta.coords.latitude;
-        //var lon = respuesta.coords.longitude;
+      $("#ubicación").click(function(){
+        navigator.geolocation.getCurrentPosition(fn_ok, fn_error);
+
+      var divMapa = document.getElementById('map');
+      function fn_error(){
+       divMapa.innerHTML='Permite dar a conocer tu ubicación';
+      }
+     function fn_ok(respuesta){
+        var lat = respuesta.coords.latitude;
+        var lon = respuesta.coords.longitude;
        
-        //var glatLon = new google.maps.LatLng(lat, lon);
+        var glatLon = new google.maps.LatLng(lat, lon);
+        var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
+          var marker = new google.maps.Marker({
+            position: glatLon,
+            map: map,
+            title:"Esta es tu ubicacion",
+            icon: iconBase + 'parking_lot_maps.png'
+          })
+      }
+
+      });//end funcion de ubicacion 
+      $("#ruta").click(function(){
+        alert("ok");
+      });
+      
         var ubicacion = {lat: 24.6582542, lng: -13.149797};
       map = new google.maps.Map(document.getElementById('map'), 
       {
-        zoom: 1.5,      
+        zoom: 3,      
         center: ubicacion,
         mapTypeId:'roadmap'
       });
@@ -54,10 +97,10 @@
       $.each(p, function(i, item){  
             var infowindow = new google.maps.InfoWindow
         ({
-          content:item.name,
+          content:item.abreviacion,
           maxWidth: 200
         });
-        var posi = new google.maps.LatLng(item.latitude, item.longitude);     
+        var posi = new google.maps.LatLng(item.latitud, item.longitud);     
         var marca = new google.maps.Marker
           ({       
             position:posi,
