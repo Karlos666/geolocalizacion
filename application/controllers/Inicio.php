@@ -10,11 +10,17 @@ class Inicio  extends CI_Controller {
 	}
 	public function index()
 	{
-		$this->load->view('inicio');
+		$data['paises']  = $this->M_base->get_paises();
+		$data['opp']  = $this->M_base->get_opp();
+		$this->load->view('inicio', $data);
 	}
 	
 	public function get_marcadores(){
 		echo json_encode($this->M_base->get_marcadores());
+	}
+	public function get_marcadores_pais(){
+		$param['id_pais'] = $this->input->post('id_pais');
+		echo json_encode($this->M_base->get_marcadores_pais($param));
 	}
 }
 
