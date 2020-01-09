@@ -12,6 +12,7 @@ class Inicio  extends CI_Controller {
 	{
 		$data['paises']  = $this->M_base->get_paises();
 		$data['opp']  = $this->M_base->get_opp();
+		
 		$this->load->view('inicio', $data);
 	}
 	
