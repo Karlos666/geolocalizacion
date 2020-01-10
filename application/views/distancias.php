@@ -43,6 +43,20 @@ html, body {
       <div>
         <input type="text" name="mexico" id="mexico" value="México">
         <strong>Results</strong>
+
+        <?php
+        foreach ($org as $row_organizaciones) {
+          if($row_organizaciones->latitud != null){
+          ?>
+          <input type="text" class="numero" id="latitud" name="latitud[]" value="<?= $row_organizaciones->latitud; ?>">
+          <input type="text" class="longitud" id="longitud" name="longitud[]" value="<?= $row_organizaciones->longitud; ?>">
+          <?php
+          }
+        }
+        ?>
+        
+  <input type="text" id="input-json" value="<?= $json_localizacion; ?>">
+        <?= $json_localizacion; ?>
       </div>
       <div id="output"></div>
     </div>
@@ -57,6 +71,20 @@ html, body {
     ?>
 <!-- Replace the value of the key parameter with your own API key. -->
 <script type="text/javascript">
+  var informacion = document.getElementsByClassName("numero");
+  var informacionLongitud = document.getElementsByClassName("longitud");
+  console.log(informacion);
+   arrayGuardar = [];
+
+        for (var i = 0; i < informacion.length; i++) {    
+            arrayGuardar[i] = {'lat': informacion[i], 'lng': informacionLongitud[i]};
+            console.log (informacion[i].value);     
+            }    
+
+            console.log('el array'+ arrayGuardar[3]);   
+        
+
+
   var base_url = "<?php echo base_url(); ?>";
 
   function initMap() {
@@ -64,17 +92,7 @@ html, body {
   var markersArray = [];
   var namePais  = $("#mexico").val();
 
-    //$.post(base_url+"Distancias/get_name_pais",
-      //{
-        //namePais:namePais
-      //},
-
-      //function(data)
-     // {
-       // var p = JSON.parse(data);
-    //alert(data);
-        //$.each(p, function(i, item){
-      //if (item.latitud != null && item.longitud != null ) { 
+    
 
           var origin1 = {lat:16.814782261639657 ,lng:-96.7842015}; 
 
@@ -85,8 +103,8 @@ html, body {
           var uesf = {lat:16.8633 , lng: -93.2121277};
           var cirsa = {lat: 17.1408121, lng: -92.7159518};
 
-
-
+          //var origen = new google.maps.LatLng(item.latitud, item.longitud);
+          
           var destinationIcon = 'https://chart.googleapis.com/chart?' +
               'chst=d_map_pin_letter&chld=D|FF0000|000000';
           var originIcon = 'https://chart.googleapis.com/chart?' +
@@ -100,7 +118,7 @@ html, body {
           var service = new google.maps.DistanceMatrixService;
           service.getDistanceMatrix({
             origins: [origin1],
-            destinations: [cepco,capim,uciri,comon,uesf,cirsa],
+            destinations: [<?= $json_localizacion; ?>],
             travelMode: 'DRIVING',
             unitSystem: google.maps.UnitSystem.METRIC,
             avoidHighways: false,
@@ -109,7 +127,7 @@ html, body {
 
           function(response, status) {
             if (status !== 'OK') {
-              alert('Error was: ' + status);
+              alert('Error: ' + status);
             } else {
               var originList = response.originAddresses;
               var destinationList = response.destinationAddresses;
@@ -128,7 +146,7 @@ html, body {
                       icon: icon
                     }));
                   } else {
-                    alert('Geocode was not successful due to: ' + status);
+                    alert('Error: ' + status);
                   }
                 };
               };
@@ -143,14 +161,12 @@ html, body {
                       showGeocodedAddressOnMap(true));
 
                   outputDiv.innerHTML += originList[i] + ' -A- ' + destinationList[j] +
-                      ' [Distancia] ' + results[j].distance.text + ' [Tiempo] ' + results[j].duration.text + service[j]+  '<br><br>';
+                      ' [Distancia] ' + results[j].distance.text + ' [Tiempo] ' + results[j].duration.text +  '<br><br>';
                 }
               }
             }
           });
-      //  }
-     // });  //end each       
-    //});  //end funtion
+
 
   }
 
