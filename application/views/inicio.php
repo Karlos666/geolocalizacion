@@ -75,8 +75,8 @@
     <div id="map"></div>
 
     <div id="infowindow-content">
-      <span id="place-name"  class="title"></span><br>
-      <strong>Place ID</strong>: <span id="place-id"></span><br>
+      <!---<span id="place-name"  class="title"></span><br>
+      <span id="place-id"></span><br>--><br>
       <span id="place-address"></span>
     </div>
     <div class="informacion">
@@ -90,8 +90,9 @@
 
     <br/>
     <form id="formulario" action="" method="post">
-      <input id="pac-input" class="controls" type="text" placeholder="pon tu pinche lugar">
-      Quieres ver las organizaciones de este lugar: <input type="text" id="lugar_ubicacion"><button type="button" id="si">si</button><br>
+      <input id="pac-input" class="controls" type="text" placeholder="Ingresa un lugar">
+      Quieres ver las organizaciones de este lugar: <input type="text" id="lugar_ubicacion"><br>
+      <table class="table" id="organizaciones2"></table>
       <label>Para marcar punto de partida dar clic en el mapa</label>
       <br>
       <label>Estas son tus coordenadas: </label>
@@ -193,7 +194,11 @@
 
       var geocoder = new google.maps.Geocoder;
 
-      var marker = new google.maps.Marker({map: map});
+      var marker = new google.maps.Marker({
+        map: map, 
+        draggable: true
+
+      });
       marker.addListener('click', function() {
         infowindow.open(map, marker);
       });
@@ -218,16 +223,64 @@
         marker.setPlace(
             {placeId: place.place_id, location: results[0].geometry.location});
 
-        marker.setVisible(true);
+        marker.setVisible(false);
 
-        var name_lugar = infowindowContent.children['place-name'].textContent = place.name;
-        var id_lugar = infowindowContent.children['place-id'].textContent = place.place_id;
-        var direccion_lugar = infowindowContent.children['place-address'].textContent =
-        results[0].formatted_address;
-        $("#lugar_ubicacion").val(direccion_lugar);
-        alert(direccion_lugar);    
+        //var name_lugar = infowindowContent.children['place-name'].textContent = place.name;
+        //var id_lugar = infowindowContent.children['place-id'].textContent = place.place_id;
+        var direccion_lugar = infowindowContent.children['place-address'].textContent = results[0].formatted_address;
+        var elarray = direccion_lugar.split(",");
+        var pais = elarray[elarray.length - 1];
+        $("#lugar_ubicacion").val(pais.trim());
+        var namePais = $("#lugar_ubicacion").val(); 
+        //alert(namePais);
+        $('#organizaciones2').html(
+        '<tr>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
+        '</tr>'
+      );
+      $.post(base_url+"Inicio/get_name_pais",
+      {
+        namePais:namePais
+      },
 
-        infowindow.open(map, marker);
+      function(data)
+      {
+        var p = JSON.parse(data);
+    
+        $.each(p, function(i, item){
+        if (item.latitud != null && item.longitud != null ) { 
+          $('#organizaciones2').append(
+            `<tr>
+              <td>${item.id_opp}</td>
+              <td>${item.abreviacion}</td>
+              <td>KM:${item.fk_id_pais}</td>
+              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
+            </tr>`
+          );
+        }//end if
+          var infowindow = new google.maps.InfoWindow
+          ({
+            content:item.abreviacion + item.latitud,
+            maxWidth: 200
+          });
+          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var marca = new google.maps.Marker
+          ({       
+            position:posi,
+            animation: google.maps.Animation.DROP
+          });  
+          google.maps.event.addListener(marca,"click", function()
+          {
+            infowindow.open(map, marca);
+          });   
+          marca.setMap(map); 
+   
+        });         
+      });  //end funtion  
+      infowindow.open(map, marker);
       });
     });
 
