@@ -15,7 +15,8 @@ class Distancias  extends CI_Controller {
             if($organizacion->latitud != null){
                 $localizacion[] = array(
                     'lat' => $organizacion->latitud,
-                    'lng' => $organizacion->longitud
+                    'lng' => $organizacion->longitud,
+                    'abreviacion'  => $organizacion->abreviacion
                 );
             }
     
