@@ -154,9 +154,7 @@ console.log("orige"+origin1)
               position: results[0].geometry.location,
               icon: icon
             }));
-          } else {
-            //alert('Geocode was not successful due to: ' + status);
-          }
+          } 
         };
       };
 
@@ -168,8 +166,8 @@ console.log("orige"+origin1)
         for (var j = 0; j < results.length; j++) {
           geocoder.geocode({'address': destinationList[j]},
               showGeocodedAddressOnMap(true));
-          outputDiv.innerHTML += originList[i] + 'A' + destinationList[j] + item.latitud +
-              ': ' + results[j].distance.text + 'EN' +
+          outputDiv.innerHTML += originList[i] + ' A---' + destinationList[j] + 'ID: '+ item.id_opp +
+              ' : ' + results[j].distance.text + ' EN ' +
               results[j].duration.text + '<br>';
         }
       }

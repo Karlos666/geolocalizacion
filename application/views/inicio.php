@@ -86,20 +86,21 @@
       <button id="ver">Ver todas las organizaciones</button>
       <br> 
       <input type="hidden" name="x" id="x"> <input type="hidden" name="y" id="y">
-     
+     <button id="calcular" name="calcular" type="button">Calcular</button>
 
     <br/>
     <form id="formulario" action="" method="post">
       <input id="pac-input" class="controls" type="text" placeholder="Ingresa un lugar">
-      Quieres ver las organizaciones de este lugar: <input type="text" id="lugar_ubicacion"><br>
+
+      <input type="hidden" id="lugar_ubicacion"><br>
+      
       <table class="table" id="organizaciones2"></table>
-      <label>Para marcar punto de partida dar clic en el mapa</label>
       <br>
-      <label>Estas son tus coordenadas: </label>
+      <label>Estas son tus coordenadas de punto de partida: </label><br>
       <label>Latitud: </label>
-      <input type="text" name="cx" id="cx"> 
+      <input type="text" name="cx" id="cx" required=""> 
       <label>Longitud: </label>
-      <input type="text" name="cy" id="cy">
+      <input type="text" name="cy" id="cy" required="">
       <br>
        <select id = "pais1" onchange="search1()">
       <?php foreach ($paises as $pais) {?>
@@ -125,7 +126,7 @@
 <!--inicio de mapa-->
 <script>
   //variables globales
-  var base_url = "<?php echo base_url(); ?>";
+   var base_url = "<?php echo base_url(); ?>";
   var punto_partida = [];
 
   function quitar_marcadores(lista)
@@ -139,6 +140,8 @@
   //funcion inicial de initMap
   function initMap() 
   { 
+    var bounds = new google.maps.LatLngBounds;
+    var markersArray = [];
     //funcion para iniciar la ubicacion actual
     var infoWindow = new google.maps.InfoWindow; 
     navigator.geolocation.getCurrentPosition(fn_ok, fn_error);
@@ -228,19 +231,13 @@
         //var name_lugar = infowindowContent.children['place-name'].textContent = place.name;
         //var id_lugar = infowindowContent.children['place-id'].textContent = place.place_id;
         var direccion_lugar = infowindowContent.children['place-address'].textContent = results[0].formatted_address;
+        
+
         var elarray = direccion_lugar.split(",");
         var pais = elarray[elarray.length - 1];
         $("#lugar_ubicacion").val(pais.trim());
         var namePais = $("#lugar_ubicacion").val(); 
-        //alert(namePais);
-        $('#organizaciones2').html(
-        '<tr>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
-        '</tr>'
-      );
+      
       $.post(base_url+"Inicio/get_name_pais",
       {
         namePais:namePais
@@ -251,19 +248,10 @@
         var p = JSON.parse(data);
     
         $.each(p, function(i, item){
-        if (item.latitud != null && item.longitud != null ) { 
-          $('#organizaciones2').append(
-            `<tr>
-              <td>${item.id_opp}</td>
-              <td>${item.abreviacion}</td>
-              <td>KM:${item.fk_id_pais}</td>
-              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
-            </tr>`
-          );
-        }//end if
+       
           var infowindow = new google.maps.InfoWindow
           ({
-            content:item.abreviacion + item.latitud,
+            content:item.abreviacion,
             maxWidth: 200
           });
           var posi = new google.maps.LatLng(item.latitud, item.longitud);     
@@ -304,10 +292,13 @@
       coordenadas = coordenadas.replace(")","");
       var lista = coordenadas.split(",");
       var direcion = new google.maps.LatLng(lista[0], lista[1]);
+      var origen = 'https://chart.googleapis.com/chart?' +
+      'chst=d_map_pin_letter&chld=O|FFFF00|000000'
       var marcador = new google.maps.Marker
       ({
         position:direcion,
         map:map,
+        icon:origen,
         animation:google.maps.Animation.DROP,
         draggable:false
       });
@@ -319,7 +310,137 @@
       marcador.setMap(map);      
     });// en function
    
+    $("#calcular").click(function(){
+    //clearMarkers();
 
+  var div_salida = [];
+
+        var contador  = 0;
+      var cx = $("#cx").val();
+      var cy = $("#cy").val();
+        var origin1 = new google.maps.LatLng(cx , cy);
+      var pias_organizacion = $("#lugar_ubicacion").val();
+      //alert(pias_organizacion);
+
+           $('#organizaciones2').html(
+        '<tr>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
+          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
+        '</tr>'
+      );
+
+      $.post(base_url+"Inicio/get_calcular_distancia",
+        {
+        pias_organizacion:pias_organizacion
+      },
+
+      function(data)
+      {
+        var p = JSON.parse(data);
+        var destino2 = [];
+        $.each(p, function(i, item){ contador++;
+            if (item.latitud != null && item.longitud != null ) {
+              var el_id_opp = item.id_opp;
+          var destino = new google.maps.LatLng(item.latitud,item.longitud);
+          destino2.push(destino);
+          $('#organizaciones2').append(
+            `<tr>
+              <td>${contador}</td>
+              <td>${item.abreviacion}</td>
+              <td id="output-${item.id_opp}"><p class="span_direccion"></p></td>
+              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
+            </tr>`
+          );
+        }//end if
+          var destinationIcon = '';
+    var originIcon = '';
+    
+
+
+  var geocoder = new google.maps.Geocoder;
+
+  var service = new google.maps.DistanceMatrixService;
+
+  service.getDistanceMatrix({
+    origins: [origin1],
+    destinations: destino2,
+    travelMode: 'DRIVING',
+    unitSystem: google.maps.UnitSystem.METRIC,
+    avoidHighways: false,
+    avoidTolls: false
+  }, 
+
+  function(response, status) {
+
+    if(el_id_opp != undefined){
+
+    /*  var div_salida = document.getElementById('output-'+el_id_opp).id;
+      console.log("id:"+el_id_opp);
+      
+      console.log("div:"+div_salida);*/
+    }
+
+    if (status !== 'OK') {
+      //alert('Error : ' + status);
+    } else {
+
+
+
+      var originList = response.originAddresses;
+      var destinationList = response.destinationAddresses;
+    
+
+  
+
+  
+      deleteMarkers(markersArray);
+
+      var showGeocodedAddressOnMap = function(asDestination) {
+        var icon = asDestination ? destinationIcon : originIcon;
+        /*return function(results, status) {
+          if (status === 'OK') {
+            map.fitBounds(bounds.extend(results[0].geometry.location));
+            markersArray.push(new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location,
+              icon: icon
+            }));
+          } 
+        };*/
+      };
+      let spanObjetivo = document.getElementsByClassName("span_direccion");
+
+
+      for (var i = 0; i < originList.length; i++) {
+        var results = response.rows[i].elements;
+      console.log('el total de results: '+results.length);
+      
+        geocoder.geocode({'address': originList[i]},
+            showGeocodedAddressOnMap(false));
+
+        for (var j = 0; j < results.length; j++) {
+          geocoder.geocode({'address': destinationList[j]},
+              showGeocodedAddressOnMap(true));
+
+             spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' +
+             results[j].duration.text; 
+
+        }
+
+      }
+
+      
+    }
+
+  });
+
+        }); //end each
+
+
+    });
+  });
 
 
     //funcion para mostrar todos los puntos 
@@ -565,7 +686,13 @@
 
   } //end function initMap
 
-  
+  function deleteMarkers(markersArray) {
+  for (var i = 0; i < markersArray.length; i++) {
+    markersArray[i].setMap(null);
+  }
+  markersArray = [];
+}
+
 
 
 

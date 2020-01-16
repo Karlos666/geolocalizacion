@@ -48,6 +48,15 @@ class M_base extends CI_Model
         $r = $this->db->get();
         return $r->result();
     }//end function
+    public function get_calcular_distancia($param)
+    {
+        $this->db->select("*");
+        $this->db->from("pais as pais");
+        $this->db->join("opp as opp", "pais.id_pais = opp.fk_id_pais", "left");
+        $this->db->where("pais.nombre", $param["pias_organizacion"]);
+        $r = $this->db->get();
+        return $r->result();
+    }//end function
 
      public function get_name_org($mexico)
     {
