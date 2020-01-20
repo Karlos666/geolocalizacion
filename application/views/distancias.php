@@ -41,23 +41,9 @@ html, body {
         </pre>
       </div>
       <div>
-        <input type="text" name="mexico" id="mexico" value="Colombia">
-        <strong>Results</strong><br>
-            <?php
-        foreach ($org as $row_organizaciones) {
-          if($row_organizaciones->latitud != null){
-          ?>
-          <label name="abreviacion" value=""><?= $row_organizaciones->abreviacion; ?></label>
-          <input type="text" class="latitud" id="latitud" name="latitud[]" value="<?= $row_organizaciones->latitud; ?>">
-          <input type="text" class="longitud" id="longitud" name="longitud[]" value="<?= $row_organizaciones->longitud; ?>"><br>
-          <?php
-          }
-        }
-        ?>
-
-        <input type="text" name="origen_latitud" id="origen_latitud" value="3.8151748866268482">
-        <input type="text" name="origen_longitud" id="origen_longitud" value=" -75.13146472723231">
-
+  
+ <input onclick="clearMarkers();" type=button value="Ocultar marcadores"><br>
+        <input onclick="showMarkers();" type=button  value="Mostrar marcadores"><br>
         _
       </div>
       <div id="output"></div>
@@ -66,9 +52,173 @@ html, body {
 
 <!-- Replace the value of the key parameter with your own API key. -->
 <script type="text/javascript">
+  var base_url = "<?php echo base_url();?>"
+  var map;
+  //inciamos la funcion de mapa
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: {lat: 24.6582542, lng: -13.149797},
+      zoom: 2
+    });
 
-        
-function initMap() {
+
+
+  }//end function inimap
+   
+
+
+
+
+  function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+      center: {lat: 24.6582542, lng: -13.149797},
+      zoom: 2
+    });
+
+
+     $.post(base_url+"Inicio/get_marcadores",
+      function(data)
+      {
+        var p = JSON.parse(data);
+        $.each(p, function(i, item){  
+          var infowindow = new google.maps.InfoWindow
+          ({
+            content:item.abreviacion,
+            maxWidth: 200
+          });
+          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var marca = new google.maps.Marker
+          ({       
+            position:posi,
+            animation: google.maps.Animation.DROP,
+         
+          });
+          
+          google.maps.event.addListener(marca,"click", function()
+          {
+            infowindow.open(map, marca);
+          });   
+          marca.setMap(map); 
+
+        });
+      });
+}
+
+
+
+
+// Shows any markers currently in the array.
+function showMarkers() {
+
+      $.post(base_url+"Inicio/get_marcadores",
+      function(data)
+      {
+        var p = JSON.parse(data);
+        $.each(p, function(i, item){  
+          var infowindow = new google.maps.InfoWindow
+          ({
+            content:item.abreviacion,
+            maxWidth: 200
+          });
+          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var marca = new google.maps.Marker
+          ({       
+            position:posi,
+            animation: google.maps.Animation.DROP,
+            visible: false
+          });
+          
+          google.maps.event.addListener(marca,"click", function()
+          {
+            infowindow.open(map, marca);
+          });   
+          marca.setMap(map); 
+
+        });
+      });
+}
+
+function clearMarkers () {
+
+      $.post(base_url+"Inicio/get_marcadores",
+      function(data)
+      {
+        var p = JSON.parse(data);
+        $.each(p, function(i, item){  
+          var infowindow = new google.maps.InfoWindow
+          ({
+            content:item.abreviacion,
+            maxWidth: 200
+          });
+          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var marca = new google.maps.Marker
+          ({       
+            position:posi,
+            animation: google.maps.Animation.DROP,
+            visible: false
+          });
+          
+          google.maps.event.addListener(marca,"click", function()
+          {
+            infowindow.open(map, marca);
+          });   
+          marca.setMap(map); 
+
+        });
+      });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*function initMap() {
 
 
   var base_url = "<?php echo base_url()?>";
@@ -169,7 +319,7 @@ function deleteMarkers(markersArray) {
     markersArray[i].setMap(null);
   }
   markersArray = [];
-}
+}*/
 
   
   

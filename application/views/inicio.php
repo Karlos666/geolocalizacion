@@ -93,8 +93,7 @@
     </div>
     <div class="informacion">
       <div id="panel-flotante">
-        <input onclick="clearMarkers();" type=button value="Ocultar marcadores"><br>
-        <input onclick="showMarkers();" type=button  value="Mostrar marcadores"><br>
+
         <input id="calcular" name="calcular" type="button" value="Calcular rutas">
       </div>
       
@@ -476,11 +475,15 @@
             content:item.abreviacion + item.latitud,
             maxWidth: 200
           });
-          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var posi = new google.maps.LatLng(item.latitud, item.longitud); 
+          //var icon'https://chart.googleapis.com/chart?' +
+            'chst=d_map_pin_letter&chld=D|FF0000|000000';    
           var marca = new google.maps.Marker
           ({       
             position:posi,
-            animation: google.maps.Animation.DROP
+            animation: google.maps.Animation.DROP,
+            
+            //icon:icon
           });  
           google.maps.event.addListener(marca,"click", function()
           {
@@ -492,11 +495,6 @@
         });         
       });
     }//end function search
-
-
-
-
-
 
     var onChangeHandler = function() {
       calculateAndDisplayRoute(directionsService, directionsRenderer);
