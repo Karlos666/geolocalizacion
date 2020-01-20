@@ -69,15 +69,7 @@ html, body {
 
         
 function initMap() {
- /*var informacionLatitud = document.getElementsByClassName("latitud");
-  var informacionLongitud = document.getElementsByClassName("longitud");
-  var destinoArray = [];
-  for (var i = 0; i < informacionLatitud.length; i++) {    
-    destinoArray[i] = new google.maps.LatLng (informacionLatitud[i],informacionLatitud[i]);
-    console.log("resultado" + destinoArray[i]);
-  }    
 
-            //console.log('el destino'+ destino); */ 
 
   var base_url = "<?php echo base_url()?>";
   var bounds = new google.maps.LatLngBounds;
@@ -85,9 +77,7 @@ function initMap() {
   var origen_longitud = $("#origen_longitud").val();
   var origen_latitud = $("#origen_latitud").val();
   var origin1 = new google.maps.LatLng(origen_latitud , origen_longitud);
-  //var origin1 = {lat: 16.853138360355686, lng: -96.78096747380502};
 
-console.log("orige"+origin1)
   var namePais = $("#mexico").val();
 
    $.post(base_url+"Inicio/get_name_pais",
@@ -101,15 +91,12 @@ console.log("orige"+origin1)
         var destino2 = [];
         $.each(p, function(i, item){
           var org = item.abreviacion;
-          console.log(org);
           if (item.latitud != null && item.longitud != null ) {
             var destino = new google.maps.LatLng(item.latitud,item.longitud);
             //let destino = {lat: item.latitud, lng: item.longitud};
             destino2.push(destino);
-            console.log(destino)
             //alert(destino);
           }
-          console.log("destino"+ destino2)
        
 
 

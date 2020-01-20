@@ -4,7 +4,7 @@
      <style type="text/css">
     #map
     {
-      width: 700px;
+      width: 800px;
       height: 700px;
       float:left;
     }
@@ -62,6 +62,20 @@
   border-color: #4d90fe;
 }
 
+#panel-flotante {
+  position: absolute;
+  top: 60px;
+  left: 1%;
+  z-index: 5;
+  background-color: #fff;
+  padding: 1px;
+  border: 1px solid #999;
+  text-align: center;
+
+  line-height: 30px;
+  padding-left:5px;
+}
+
 
 
   </style>
@@ -75,47 +89,44 @@
     <div id="map"></div>
 
     <div id="infowindow-content">
-      <!---<span id="place-name"  class="title"></span><br>
-      <span id="place-id"></span><br>--><br>
       <span id="place-address"></span>
     </div>
     <div class="informacion">
-      <label>Controles generales de mapa</label>
-      <button style="margin-left: 15px;" id="ubicación">Mi ubicación</button>
-      <input onclick = " clearMarkers (); " type = button value = "Ocultar marcadores" >
-      <button id="ver">Ver todas las organizaciones</button>
-      <br> 
-      <input type="hidden" name="x" id="x"> <input type="hidden" name="y" id="y">
-     <button id="calcular" name="calcular" type="button">Calcular</button>
-
-    <br/>
-    <form id="formulario" action="" method="post">
-      <input id="pac-input" class="controls" type="text" placeholder="Ingresa un lugar">
-
-      <input type="hidden" id="lugar_ubicacion"><br>
+      <div id="panel-flotante">
+        <input onclick="clearMarkers();" type=button value="Ocultar marcadores"><br>
+        <input onclick="showMarkers();" type=button  value="Mostrar marcadores"><br>
+        <input id="calcular" name="calcular" type="button" value="Calcular rutas">
+      </div>
       
-      <table class="table" id="organizaciones2"></table>
-      <br>
-      <label>Estas son tus coordenadas de punto de partida: </label><br>
-      <label>Latitud: </label>
-      <input type="text" name="cx" id="cx" required=""> 
-      <label>Longitud: </label>
-      <input type="text" name="cy" id="cy" required="">
-      <br>
-       <select id = "pais1" onchange="search1()">
+      <fieldset>
+        <p>Instrucciones de uso para marcar rutas de acceso<p>
+          <ol>
+            <li>Buscar el lugar en donde desea poner el punto de partida</li>
+            <li>Dar clic dentro del mapa para posicionar el punto de partida</li>
+            <li>Dar clic en el botón (Calcular rutas) que se encuentra del lado izquierdo del mapa para que muestre la lista de organizaciones que se encunetran en el país en donde esta posicionado</li>
+            <li>Dar clic en el link de ver ruta que se muestra en la lista de las organizaciones</li>
+          </ol>
+      </fieldset>
+      <!--input guarda coordenadas de ubicacion actual-->
+      <input type="hidden" name="ubicacionLat" id="ubicacionLat"> <input type="hidden" name="ubicacionLng" id="ubicacionLng">
+      <form id="formulario" action="" method="post">
+      <input id="pac-input" class="controls" type="text" placeholder="Ingresa un lugar">
+      <input type="hidden" id="lugar_ubicacion">     
+    
+      <input type="hidden" name="cx" id="cx" required=""> 
+ 
+      <input type="hidden" name="cy" id="cy" required="">
+ 
+       <select id = "pais1" onchange="search()">
+        <option value="">Selecciona un pais</option>        
       <?php foreach ($paises as $pais) {?>
         <option value="<?php echo $pais->id;?>"><?php echo $pais->nombre_pais;?></option>
      <?php } ?> 
     </select>
-    <table border="1" id="organizaciones1"></table>
     </form>
     <br/>
-    <label>Buscador de Organizaciones por pais:</label>
-    <select id = "pais" onchange="search()">
-      <?php foreach ($paises as $pais) {?>
-        <option value="<?php echo $pais->id;?>"><?php echo $pais->nombre_pais;?></option>
-     <?php } ?> 
-    </select>
+
+ 
 
       <table border="1" id="organizaciones"></table>
     
@@ -126,8 +137,10 @@
 <!--inicio de mapa-->
 <script>
   //variables globales
-   var base_url = "<?php echo base_url(); ?>";
+  var base_url = "<?php echo base_url(); ?>";
   var punto_partida = [];
+  var  map;
+
 
   function quitar_marcadores(lista)
   {
@@ -140,6 +153,7 @@
   //funcion inicial de initMap
   function initMap() 
   { 
+
     var bounds = new google.maps.LatLngBounds;
     var markersArray = [];
     //funcion para iniciar la ubicacion actual
@@ -155,8 +169,8 @@
     {
       var lat = respuesta.coords.latitude;
       var lon = respuesta.coords.longitude;
-      var text_lat = $("#x").val(lat);
-      var text_lon = $("#y").val(lon);
+      var text_lat = $("#ubicacionLat").val(lat);
+      var text_lon = $("#ubicacionLng").val(lon);
       glatLon = new google.maps.LatLng(lat, lon);
       infoWindow.setPosition(glatLon);
       infoWindow.setContent('esta es tu ubicacion.');
@@ -165,19 +179,45 @@
 
     var formulario = $("#formulario");
 
-
-
     var directionsService = new google.maps.DirectionsService();
     var directionsRenderer = new google.maps.DirectionsRenderer();
 
     var ubicacion = {lat: 24.6582542, lng: -13.149797};
     //se inicializa el mapa
-    var map = new google.maps.Map(document.getElementById('map'), 
+    map = new google.maps.Map(document.getElementById('map'), 
     {
       zoom: 2,      
       center: ubicacion,
       mapTypeId:'roadmap'
     });
+
+ //funcion para mostrar todos los puntos 
+
+      $.post(base_url+"Inicio/get_marcadores",
+      function(data)
+      {
+        var p = JSON.parse(data);
+        $.each(p, function(i, item){  
+          var infowindow = new google.maps.InfoWindow
+          ({
+            content:item.abreviacion,
+            maxWidth: 200
+          });
+          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
+          var marca = new google.maps.Marker
+          ({       
+            position:posi,
+            animation: google.maps.Animation.DROP
+          });
+          google.maps.event.addListener(marca,"click", function()
+          {
+            infowindow.open(map, marca);
+          });   
+          marca.setMap(map); 
+
+        });
+      });
+ 
 
     //inicia buscador de lugares
      var input = document.getElementById('pac-input');
@@ -277,10 +317,9 @@
 
     var transitLayer = new google.maps.TransitLayer();
     transitLayer.setMap(map);
-
-
     directionsRenderer.setMap(map);
     directionsRenderer.setPanel(document.getElementById('bottom-panel')); 
+
 
 
     //funcion para marcar nueva posicion den marcador 
@@ -302,6 +341,7 @@
         animation:google.maps.Animation.DROP,
         draggable:false
       });
+
   
       formulario.find("input[name='cx']").val(lista[0]);
       formulario.find("input[name='cy']").val(lista[1]);
@@ -309,177 +349,109 @@
       quitar_marcadores(punto_partida);
       marcador.setMap(map);      
     });// en function
+
+
    
     $("#calcular").click(function(){
-    //clearMarkers();
-
-  var div_salida = [];
-
-        var contador  = 0;
-      var cx = $("#cx").val();
-      var cy = $("#cy").val();
-        var origin1 = new google.maps.LatLng(cx , cy);
-      var pias_organizacion = $("#lugar_ubicacion").val();
-      //alert(pias_organizacion);
-
-           $('#organizaciones2').html(
-        '<tr>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
-        '</tr>'
-      );
-
-      $.post(base_url+"Inicio/get_calcular_distancia",
-        {
-        pias_organizacion:pias_organizacion
-      },
-
-      function(data)
-      {
-        var p = JSON.parse(data);
-        var destino2 = [];
-        $.each(p, function(i, item){ contador++;
-            if (item.latitud != null && item.longitud != null ) {
-              var el_id_opp = item.id_opp;
-          var destino = new google.maps.LatLng(item.latitud,item.longitud);
-          destino2.push(destino);
-          $('#organizaciones2').append(
-            `<tr>
-              <td>${contador}</td>
-              <td>${item.abreviacion}</td>
-              <td id="output-${item.id_opp}"><p class="span_direccion"></p></td>
-              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
-            </tr>`
-          );
-        }//end if
-          var destinationIcon = '';
-    var originIcon = '';
-    
-
-
-  var geocoder = new google.maps.Geocoder;
-
-  var service = new google.maps.DistanceMatrixService;
-
-  service.getDistanceMatrix({
-    origins: [origin1],
-    destinations: destino2,
-    travelMode: 'DRIVING',
-    unitSystem: google.maps.UnitSystem.METRIC,
-    avoidHighways: false,
-    avoidTolls: false
-  }, 
-
-  function(response, status) {
-
-    if(el_id_opp != undefined){
-
-    /*  var div_salida = document.getElementById('output-'+el_id_opp).id;
-      console.log("id:"+el_id_opp);
-      
-      console.log("div:"+div_salida);*/
-    }
-
-    if (status !== 'OK') {
-      //alert('Error : ' + status);
-    } else {
-
-
-
-      var originList = response.originAddresses;
-      var destinationList = response.destinationAddresses;
-    
-
-  
-
-  
-      deleteMarkers(markersArray);
-
-      var showGeocodedAddressOnMap = function(asDestination) {
-        var icon = asDestination ? destinationIcon : originIcon;
-        /*return function(results, status) {
-          if (status === 'OK') {
-            map.fitBounds(bounds.extend(results[0].geometry.location));
-            markersArray.push(new google.maps.Marker({
-              map: map,
-              position: results[0].geometry.location,
-              icon: icon
-            }));
-          } 
-        };*/
-      };
-      let spanObjetivo = document.getElementsByClassName("span_direccion");
-
-
-      for (var i = 0; i < originList.length; i++) {
-        var results = response.rows[i].elements;
-      console.log('el total de results: '+results.length);
-      
-        geocoder.geocode({'address': originList[i]},
-            showGeocodedAddressOnMap(false));
-
-        for (var j = 0; j < results.length; j++) {
-          geocoder.geocode({'address': destinationList[j]},
-              showGeocodedAddressOnMap(true));
-
-             spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' +
-             results[j].duration.text; 
-
-        }
-
+      var origenLat = $("#cx").val();
+      var origenLng = $("#cy").val();
+      var div_salida = [];
+      var contador  = 0;
+      if (origenLng =="") {
+        alert("Antes de continuar debes de ubicar el punto de partida dentro del mapa");
       }
+      else{         
+        var origen = new google.maps.LatLng(origenLat , origenLng);
+        var pias_organizacion = $("#lugar_ubicacion").val();
 
-      
-    }
+          $('#organizaciones').html(
+            '<tr>'+
+              '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
+              '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
+              '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
+              '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
+            '</tr>'
+          );
+          $.post(base_url+"Inicio/get_calcular_distancia",
+            {
+              pias_organizacion:pias_organizacion
+            },
 
-  });
-
-        }); //end each
-
-
-    });
-  });
-
-
-    //funcion para mostrar todos los puntos 
-    $("#ver").click(function(){
-      $.post(base_url+"Inicio/get_marcadores",
-      function(data)
-      {
-        var p = JSON.parse(data);
-        $.each(p, function(i, item){  
-          var infowindow = new google.maps.InfoWindow
-          ({
-            content:item.abreviacion,
-            maxWidth: 200
-          });
-          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
-          var marca = new google.maps.Marker
-          ({       
-            position:posi,
-            animation: google.maps.Animation.DROP
-          });
-          google.maps.event.addListener(marca,"click", function()
+          function(data)
           {
-            infowindow.open(map, marca);
-          });   
-          marca.setMap(map);  
-        });
-      });
-    });//end function poara ver todos los puntos
+            var p = JSON.parse(data);
+            var destino2 = [];
+            $.each(p, function(i, item){ contador++;
+                if (item.latitud != null && item.longitud != null ) {
+                  var el_id_opp = item.id_opp;
+                  var destino = new google.maps.LatLng(item.latitud,item.longitud);
+                  destino2.push(destino);
+                  $('#organizaciones').append(
+                    `<tr>
+                      <td>${contador}</td>
+                      <td>${item.abreviacion}</td>
+                      <td id="output-${item.id_opp}"><p class="span_direccion"></p></td>
+                      <td><a href="#" onclick="trazar(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
+                    </tr>`
+                  );
+                }//end if
+            var destinationIcon = '';
+            var originIcon = '';
+            var geocoder = new google.maps.Geocoder;
+            var service = new google.maps.DistanceMatrixService;
+            service.getDistanceMatrix({
+              origins: [origen],
+              destinations: destino2,
+              travelMode: 'DRIVING',
+              unitSystem: google.maps.UnitSystem.METRIC,
+              avoidHighways: false,
+              avoidTolls: false
+            }, 
+
+            function(response, status) {
+              if (status !== 'OK') {} 
+              else {
+                var originList = response.originAddresses;
+                var destinationList = response.destinationAddresses;
+                deleteMarkers(markersArray);
+                var showGeocodedAddressOnMap = function(asDestination) {
+                  var icon = asDestination ? destinationIcon : originIcon;
+                };
+                let spanObjetivo = document.getElementsByClassName("span_direccion");
+                
+                for (var i = 0; i < originList.length; i++) {
+                  var results = response.rows[i].elements;
+                  geocoder.geocode({'address': originList[i]},
+                  showGeocodedAddressOnMap(false));
+
+                  for (var j = 0; j < results.length; j++) {
+                    geocoder.geocode({'address': destinationList[j]},
+                    showGeocodedAddressOnMap(true));
+                    spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' +
+                    results[j].duration.text; 
+                  }//end for
+                }//end for
+              }
+            });
+          }); //end each
+        }); //end function
+      } 
+    });//end function calcular
+
+
+   
+   
 
 
   
-        //funcion para buscar puntos por pais
-    search1 = function(){
+    //funcion para buscar puntos por pais
+    search = function(){
       var pais  = document.getElementById('pais1').value;
-      $('#organizaciones1').html(
+      $('#organizaciones').html(
         '<tr>'+
           '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
           '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
+    
         '</tr>'
       );
       $.post(base_url+"Inicio/get_marcadores_pais",
@@ -490,15 +462,14 @@
       {
         var p = JSON.parse(data);
         $.each(p, function(i, item){
-        if (item.latitud != null && item.longitud != null ) { 
-          $('#organizaciones1').append(
+       
+          $('#organizaciones').append(
             `<tr>
               <td>${item.id_opp}</td>
               <td>${item.abreviacion}</td>
-              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
             </tr>`
           );
-        }//end if
+
         if (pais) {
           var infowindow = new google.maps.InfoWindow
           ({
@@ -523,55 +494,6 @@
     }//end function search
 
 
-     //funcion para buscar puntos por pais
-    search = function(){
-      var pais  = document.getElementById('pais').value;
-      $('#organizaciones').html(
-        '<tr>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-          '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
-        '</tr>'
-      );
-      $.post(base_url+"Inicio/get_marcadores_pais",
-      {
-        id_pais:pais
-      },
-      function(data)
-      {
-        var p = JSON.parse(data);
-        $.each(p, function(i, item){
-        if (item.latitud != null && item.longitud != null ) { 
-          $('#organizaciones').append(
-            `<tr>
-              <td>${item.id_opp}</td>
-              <td>${item.abreviacion}</td>
-              <td><a href="#" onclick="trazar1(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
-            </tr>`
-          );
-        }//end if
-        if (pais) {
-          var infowindow = new google.maps.InfoWindow
-          ({
-            content:item.abreviacion,
-            maxWidth: 200
-          });
-          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
-          var marca = new google.maps.Marker
-          ({       
-            position:posi,
-            animation: google.maps.Animation.DROP
-          });  
-          google.maps.event.addListener(marca,"click", function()
-          {
-            infowindow.open(map, marca);
-          });   
-          marca.setMap(map); 
-        }
-
-        });         
-      });
-    }//end function search
 
 
 
@@ -582,9 +504,8 @@
 
     //funcion para trazar rutas
     trazar = function (latitud, longitud){
-      var lat = $("#x").val();
-      var lon = $("#y").val();
-
+      var lat = $("#cx").val();
+      var lon = $("#cy").val();
       var start = new google.maps.LatLng(lat,lon);
       var end = new google.maps.LatLng(latitud,longitud);
       directionsService.route
@@ -601,91 +522,13 @@
         }
       });
     }//end function trazar rutas
+    // Removes the markers from the map, but keeps them in the array.
 
-      //funcion para trazar rutas
-    trazar1 = function (latitud, longitud){
-      var destino_lat = $("#cx").val();
-      var destino_lon = $("#cy").val();
+clearMarkers = function () {
+  initMap(null);
+}
 
-      var start = new google.maps.LatLng(destino_lat,destino_lon);
-      var end = new google.maps.LatLng(latitud,longitud);
-      directionsService.route
-      ({
-        origin: start,
-        destination:end,
-        travelMode: 'DRIVING'
-      },
-      function(response, status) {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(response);
-        } else {
-          window.alert('No existe ruta ' + status);
-        }
-      });
-    }//end function trazar rutas
-
-
-    //funcion para multi rutas
-    $("#multiruta").click(function(){
-      var paises = $("#paises").val();
-   
-      $.post(base_url+"Inicio/get_marcadores_pais",
-      {
-        id_pais:paises
-      },
-      function(data)
-      {
-        //alert(data);
-        var p = JSON.parse(data);
-        $.each(p, function(i, item){
-   
-          var infowindow = new google.maps.InfoWindow
-          ({
-            content:item.abreviacion,
-            maxWidth: 200
-          });
-          var posi = new google.maps.LatLng(item.latitud, item.longitud);     
-          var marca = new google.maps.Marker
-          ({       
-            position:posi,
-            animation: google.maps.Animation.DROP
-          });  
-          google.maps.event.addListener(marca,"click", function()
-          {
-            infowindow.open(map, marca);
-          });   
-          marca.setMap(map); 
-          var destino_lati = $("#x").val();
-          var destino_long = $("#y").val();
-
-      var start = new google.maps.LatLng(destino_lati,destino_long);
-      var end = new google.maps.LatLng(item.latitud,item.longitud);
-      directionsService.route
-      ({
-        origin: start,
-        destination:end,
-        travelMode: 'DRIVING'
-      },
-      function(response, status) {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(response);
-        } else {
-          window.alert('No existe ruta ' + status);
-        }
-      });
-
-        });         
-      });
-
-    });
-
-    //funcion para limpiar el mapa
-    clearMarkers = function(){ 
-      initMap(null);
-    }//end function limpiar el mapa
-
-  } //end function initMap
-
+}
   function deleteMarkers(markersArray) {
   for (var i = 0; i < markersArray.length; i++) {
     markersArray[i].setMap(null);
@@ -693,6 +536,11 @@
   markersArray = [];
 }
 
+
+// Shows any markers currently in the array.
+function showMarkers() {
+  initMap(map);
+}
 
 
 
