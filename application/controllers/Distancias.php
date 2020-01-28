@@ -10,6 +10,8 @@ class Distancias  extends CI_Controller {
     }
     public function index()
     { 
+        $data['paises']  = $this->M_base->get_paises();
+        $data['opp']  = $this->M_base->get_opp();
         $data["org"] = $this->M_base->get_name_org("mexico");
         foreach ($data["org"] as $organizacion) {
             if($organizacion->latitud != null){

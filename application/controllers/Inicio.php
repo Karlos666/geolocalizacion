@@ -31,7 +31,7 @@ class Inicio  extends CI_Controller {
 	}//end function
 
 	public function get_calcular_distancia(){
-		$param['pias_organizacion'] = $this->input->post('pias_organizacion');
+		$param['namePais'] = $this->input->post('namePais');
 		echo json_encode($this->M_base->get_calcular_distancia($param));
 	}//end function
 }

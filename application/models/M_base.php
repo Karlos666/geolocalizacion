@@ -17,8 +17,9 @@ class M_base extends CI_Model
     public function get_marcadores_pais($param)
     {
         $this->db->select("*");
-        $this->db->from("opp");
-        $this->db->where("fk_id_pais", $param["id_pais"]);
+        $this->db->from("pais as pais");
+        $this->db->join("opp as opp", "pais.id_pais = opp.fk_id_pais", "left");
+        $this->db->where("opp.fk_id_pais", $param["id_pais"]);
         $r = $this->db->get();
         return $r->result();
     }
@@ -53,7 +54,7 @@ class M_base extends CI_Model
         $this->db->select("*");
         $this->db->from("pais as pais");
         $this->db->join("opp as opp", "pais.id_pais = opp.fk_id_pais", "left");
-        $this->db->where("pais.nombre", $param["pias_organizacion"]);
+        $this->db->where("pais.nombre", $param["namePais"]);
         $r = $this->db->get();
         return $r->result();
     }//end function
