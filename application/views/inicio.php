@@ -374,8 +374,7 @@
             '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
             '<th style="width: 10%;background-color: #006699; color: white;">pais</th>'+
           '</tr>'
-        );  
-        alert(namePais);        
+        );         
           $.post(base_url+"Inicio/get_name_pais",
           {
             namePais:namePais
@@ -443,7 +442,6 @@
               '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
             '</tr>'
           );  
-            alert(namePais);
             $.post(base_url+"Inicio/get_calcular_distancia",
             {
               namePais:namePais
@@ -484,24 +482,23 @@
               avoidTolls: false
             }, 
 
-            function(response, status) {
-              if (status !== 'OK') {} 
-              else {
+            function(response, status) {          
                 var originList = response.originAddresses;
                 var destinationList = response.destinationAddresses;
                 deleteMarkers(markersArray);
              
-                let spanObjetivo = document.getElementsByClassName("span_direccion");                
+                let spanObjetivo = document.getElementsByClassName("span_direccion"); 
+
                 for (var i = 0; i < originList.length; i++) {
                   var results = response.rows[i].elements;
-                  
+              
 
                   for (var j = 0; j < results.length; j++) {                
-                    spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' +
-                    results[j].duration.text; 
+                    spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' + results[j].duration.text; 
+                  
                   }//end for
                 }//end for
-              }
+              
             });
           }); //end each
         }); //end function
@@ -530,7 +527,7 @@
         if (status === 'OK') {
           directionsRenderer.setDirections(response);
         } else {
-          window.alert('No existe ruta ' + status);
+          window.alert('No existe ruta ');
         }
       });
     }//end function trazar rutas
@@ -551,7 +548,7 @@
 
     function load(){
       
-      location.reload();
+   location.reload();
     }
  
 </script>
