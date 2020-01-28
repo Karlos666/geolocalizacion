@@ -787,6 +787,7 @@ function ver_todos(){
       mapTypeId:'roadmap'
     });
       var pais  = document.getElementById('pais1').value;
+      
       $('#organizaciones').html(
         '<tr>'+
           '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+

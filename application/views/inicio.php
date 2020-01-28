@@ -93,7 +93,7 @@
     </div>
     <div class="informacion">
       <div id="panel-flotante">
-        <button id="calcular" name="calcular" type="button">Calcular tiempos </button>
+        <button  name="calcular" type="button" onclick="calcular();">Calcular tiempos </button>
         <button id="ver_todas_organizaciones" name="ver_todas_organizaciones" onclick="load();">Ver todo</button>
       </div>
       
@@ -110,7 +110,7 @@
       <input type="hidden" name="ubicacionLat" id="ubicacionLat"> <input type="hidden" name="ubicacionLng" id="ubicacionLng">
       <form id="formulario" action="" method="post">
       <input id="pac-input" class="controls" type="text" placeholder="Ingresa un lugar">
-      <input type="hidden" id="lugar_ubicacion">     
+      
     
       <input type="hidden" name="cx" id="cx" required=""> 
  
@@ -124,7 +124,8 @@
     </select>
     </form>
     <br/>
-    <table border="1" id="organizaciones">
+
+    <table border="1" id="organizaciones">   
     </table>
     
     </div>
@@ -208,6 +209,7 @@
 
         var elarray = direccion_lugar.split(",");
         var pais = elarray[elarray.length - 1];
+
         var mensaje = confirm("Desas ver las organizaciones que pertenecen a:" + pais);
         if (mensaje) {          
           search_pais(pais);
@@ -251,26 +253,28 @@
       });
     });
   }
-  //funcion para buscar puntos por pais
-  function search(){
-    //se inicializa el mapa
-   
-    map = new google.maps.Map(document.getElementById('map'), 
-    {     
-      center: ubicacion,
-      mapTypeId:'roadmap'
-    });
-        
- 
- 
+
+
+
+    //funcion para buscar puntos por pais
+    function search(){
       var pais  = document.getElementById('pais1').value;
+      //Iniciamos mapa
+      map = new google.maps.Map(document.getElementById('map'), 
+      {     
+        center: ubicacion,
+        mapTypeId:'roadmap'
+      });
+
+      $("#organizaciones").html('');
       $('#organizaciones').html(
         '<tr>'+
           '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
           '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-    
+          '<th style="width: 10%;background-color: #006699; color: white;">pais</th>'+
         '</tr>'
       );
+
       $.post(base_url+"Inicio/get_marcadores_pais",
       {
         id_pais:pais
@@ -278,86 +282,100 @@
       function(data)
       {
         var p = JSON.parse(data);
+
         $.each(p, function(i, item){
        
           $('#organizaciones').append(
             `<tr>
               <td>${item.id_opp}</td>
               <td>${item.abreviacion}</td>
+                
+                <td>${item.latitud}</td>
+              
+
             </tr>`
           );
 
-        if (pais) {
+       
           var infowindow = new google.maps.InfoWindow
           ({
-            content:item.abreviacion + item.latitud,
+            content:item.abreviacion,
             maxWidth: 200
           });
-          var posi = new google.maps.LatLng(item.latitud, item.longitud);    
+          var posi = new google.maps.LatLng(item.latitud, item.longitud); 
+        
           var marca = new google.maps.Marker
           ({       
             position:posi,
             animation: google.maps.Animation.DROP,
-          });
-          var centrar = new google.maps.LatLng(item.latitude, item.longitude);
+            
+            //icon:icon
+          });  
           map.setZoom(5);
-          map.setCenter(centrar); 
+          var centrar = new google.maps.LatLng(item.latitude, item.longitude);
+          map.setCenter(centrar);
           google.maps.event.addListener(marca,"click", function()
           {
             infowindow.open(map, marca);
-          }); 
+          });
           marca.setMap(map); 
-        }
+
+       
 
         });         
-      });
-    }//end function search
+      });   
+      }//end function search
 
+
+    //function para mostrar organizaciones
      function search_pais(pais){
-    var namePais = pais.trim();
-    //se inicializa el mapa
-    var formulario = $("#formulario");
 
-    map = new google.maps.Map(document.getElementById('map'), 
-    {     
-      center: ubicacion,
-      mapTypeId:'roadmap'
-    });
+      var namePais = pais.trim();
+      var formulario = $("#formulario");      
+      //se inicializa el mapa   
 
-  //funcion para marcar nueva posicion den marcador 
-    map.addListener("click", function(event)
-    {
-      var coordenadas = event.latLng.toString();
-      coordenadas = coordenadas.replace("(","");
-      coordenadas = coordenadas.replace(")","");
-      var lista = coordenadas.split(",");
-      var direcion = new google.maps.LatLng(lista[0], lista[1]);
-      var origen = 'https://chart.googleapis.com/chart?' +
-      'chst=d_map_pin_letter&chld=O|FFFF00|000000'
-      var marcador = new google.maps.Marker
-      ({
-        position:direcion,
-        map:map,
-        icon:origen,
-        animation:google.maps.Animation.DROP,
-        draggable:false
+      map = new google.maps.Map(document.getElementById('map'), 
+      {     
+        center: ubicacion,
+        mapTypeId:'roadmap'
       });
+      //funcion para marcar nueva posicion den marcador 
+      map.addListener("click", function(event)
+      {
+        var coordenadas = event.latLng.toString();
+        coordenadas = coordenadas.replace("(","");
+        coordenadas = coordenadas.replace(")","");
+        var lista = coordenadas.split(",");
+        var direcion = new google.maps.LatLng(lista[0], lista[1]);
+        var origen = 'https://chart.googleapis.com/chart?' +
+        'chst=d_map_pin_letter&chld=O|FFFF00|000000'
+        var marcador = new google.maps.Marker
+        ({
+          position:direcion,
+          map:map,
+          icon:origen,
+          animation:google.maps.Animation.DROP,
+          draggable:false
+        });
 
-  
-      formulario.find("input[name='cx']").val(lista[0]);
-      formulario.find("input[name='cy']").val(lista[1]);
-      punto_partida.push(marcador);
-      quitar_marcadores(punto_partida);
-      marcador.setMap(map);      
-    });// en function
+    
+        formulario.find("input[name='cx']").val(lista[0]);
+        formulario.find("input[name='cy']").val(lista[1]);
+        punto_partida.push(marcador);
+        quitar_marcadores(punto_partida);
+        marcador.setMap(map);      
+      });// en function
 
-          
-           $('#organizaciones').html(
-            '<tr>'+
-              '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
-              '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
-            '</tr>'
-          );     
+
+       $("#organizaciones").html('');
+        $('#organizaciones').html(
+          '<tr>'+
+            '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
+            '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
+            '<th style="width: 10%;background-color: #006699; color: white;">pais</th>'+
+          '</tr>'
+        );  
+        alert(namePais);        
           $.post(base_url+"Inicio/get_name_pais",
           {
             namePais:namePais
@@ -370,11 +388,11 @@
                if (item.latitud != null && item.longitud != null ) {
                   var el_id_opp = item.id_opp;
                   var destino = new google.maps.LatLng(item.latitud,item.longitud);
-                  //destino2.push(destino);
                   $('#organizaciones').append(
                     `<tr>
                       <td>${item.id_opp}</td>
                       <td>${item.abreviacion}</td>
+                      <td>${item.id_pais}</td>                      
                     </tr>`
                   );
                 }//end if
@@ -400,29 +418,32 @@
               marca.setMap(map); 
        
             });         
-          });  //end funtion 
-
+          });  //end funtion
         //end buscador de lugares
-    $("#calcular").click(function(){
-      var origenLat = $("#cx").val();
-      var origenLng = $("#cy").val();
-      var div_salida = [];
-      var contador  = 0;
-      if (origenLng =="") {
-        alert("Antes de continuar debes de ubicar el punto de partida dentro del mapa");
-      }
-      else{         
+
+
+      calcular = function(){
+        var origenLat = $("#cx").val();
+        var origenLng = $("#cy").val();
+ 
+        if (origenLng =="") {
+          alert("Antes de continuar debes de ubicar el punto de partida dentro del mapa");
+        }
+        else{         
           var origen = new google.maps.LatLng(origenLat , origenLng);
         
-          document.getElementById("organizaciones").innerHTML = '<tr>'+  
+          $("#organizaciones").html('');
+          $('#organizaciones').html(
+            '<tr>'+
               '<th style="width: 10%;background-color: #006699; color: white;">#</th>'+
               '<th style="width: 10%;background-color: #006699; color: white;">Organizacion</th>'+
+              '<th style="width: 10%;background-color: #006699; color: white;">pais</th>'+
               '<th style="width: 10%;background-color: #006699; color: white;">KM</th>'+
-              '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
-            '</tr>'+
-            '<tbody id="tbody-organizacion">'+
-            '</tbody>';
 
+              '<th style="width: 10%;background-color: #006699; color: white;">Ruta</th>'+
+            '</tr>'
+          );  
+            alert(namePais);
             $.post(base_url+"Inicio/get_calcular_distancia",
             {
               namePais:namePais
@@ -432,21 +453,24 @@
           {
             var p = JSON.parse(data);
             var destino2 = [];
-            //$("#tbody-organizacion").append("");
-            document.getElementById("tbody-organizacion").innerHTML = "";
-            $.each(p, function(i, item){ contador++;
+            
+            $.each(p, function(i, item){ 
+
                 if (item.latitud != null && item.longitud != null ) {
-                  var el_id_opp = item.id_opp;
+
                   var destino = new google.maps.LatLng(item.latitud,item.longitud);
                   destino2.push(destino);
-               
-                    document.getElementById("tbody-organizacion").innerHTML = 
+   
+                   $('#organizaciones').append(
+
                     `<tr>
-                      <td>${contador}</td>
+                      <td>${item.id_opp}</td>
                       <td>${item.abreviacion}</td>
-                      <td id="output-${item.id_opp}"><p class="span_direccion"></p></td>
+                      <td>${item.id_pais}</td>
+                      <td id="output-${item.id_opp}"><p class="span_direccion"></p></td>                
                       <td><a href="#" onclick="trazar(${item.latitud}, ${item.longitud});">Ver ruta</a></td>
-                    </tr>`;                }//end if
+                    </tr>`);                
+                }//end if
             var destinationIcon = '';
             var originIcon = '';
             var geocoder = new google.maps.Geocoder;
@@ -466,19 +490,13 @@
                 var originList = response.originAddresses;
                 var destinationList = response.destinationAddresses;
                 deleteMarkers(markersArray);
-                var showGeocodedAddressOnMap = function(asDestination) {
-                  var icon = asDestination ? destinationIcon : originIcon;
-                };
-                let spanObjetivo = document.getElementsByClassName("span_direccion");
-                
+             
+                let spanObjetivo = document.getElementsByClassName("span_direccion");                
                 for (var i = 0; i < originList.length; i++) {
                   var results = response.rows[i].elements;
-                  geocoder.geocode({'address': originList[i]},
-                  showGeocodedAddressOnMap(false));
+                  
 
-                  for (var j = 0; j < results.length; j++) {
-                    geocoder.geocode({'address': destinationList[j]},
-                    showGeocodedAddressOnMap(true));
+                  for (var j = 0; j < results.length; j++) {                
                     spanObjetivo[j].innerHTML = results[j].distance.text + ' EN ' +
                     results[j].duration.text; 
                   }//end for
@@ -487,8 +505,9 @@
             });
           }); //end each
         }); //end function
-      } 
-    });//end function calcular
+      }//en else
+
+    }//end function calcular
 
     var directionsService = new google.maps.DirectionsService();
     var directionsRenderer = new google.maps.DirectionsRenderer();
