@@ -12,7 +12,7 @@ class Inicio  extends CI_Controller {
 	{
 		$data['paises']  = $this->M_base->get_paises();
 		$data['opp']  = $this->M_base->get_opp();
-		
+			
 		$this->load->view('inicio', $data);
 	}//end function
 	
@@ -34,5 +34,11 @@ class Inicio  extends CI_Controller {
 		$param['namePais'] = $this->input->post('namePais');
 		echo json_encode($this->M_base->get_calcular_distancia($param));
 	}//end function
+	public function get_organizaciones(){
+		$param['id_organizacion'] = $this->input->post('id_organizacion');
+		echo json_encode($this->M_base->get_organizaciones($param));
+
+	}
+
 }
 
