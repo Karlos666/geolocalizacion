@@ -149,9 +149,10 @@
           </form>
           <h2>Paso N°. 3:</h2>    
           <label>Selecciona las organizaciones que deseas visitar como puntos intermedios:</label><br/>
-          <select multiple name="waypoints" id="waypoints" onchange="waypoints();">
+          <select multiple name="waypoints[]" id="waypoints">
             <option value="">Selecciona puntos intermedios</option>
           </select>
+          <button id="enviarWay" name="enviarWay" onclick="enviarWay();">Selecionar</button>
           <table id="tableWay"></table>
 
           <h2>Paso N°. 4:</h2>           
@@ -164,11 +165,11 @@
           <h2>Paso N°. 5:</h2> 
           <label>Da clic en el boton (buscar ruta), para buscar la ruta de accesos entre todos los punto que marcaste anteriormente:</label>        
           <button onclick="calcular_waypoints();  ">Buscar Ruta</button>
-        </div>
-    
+        </div>        
     </div>
     <div id="right-panel">
   <p>Distancia Total: <span id="total"></span></p>
+   <div id="directions-panel"></div>
 </div>
 
     <div id="bottom-panel"></div>
@@ -182,6 +183,7 @@
   var map;
   var markersArray = [];
   var icon_SPP = "<?php echo base_url('img/icon-SPP.png')?>";
+  var wayglobal = [];
 
   //var formulario = $("#formulario");
   function quitar_marcadores(lista)
@@ -604,7 +606,7 @@
 
 
       search_waypoints = function(){
-        var form_star = $("#form-star")
+        var form_star = $("#form-star");
         var pais_waypoints = document.getElementById('pais_waypoints').value;
         //Iniciamos mapa
         map = new google.maps.Map(document.getElementById('map'), 
@@ -612,6 +614,7 @@
           center: ubicacion,
           mapTypeId:'roadmap'
         });
+
         $("#started").html('');
         $("#started").html('<option value="">Seleciona tu origen</option>');
         $("#waypoints").html('');
@@ -622,6 +625,7 @@
         {
           id_pais:pais_waypoints
         },
+
         function(data)
           {
             var p = JSON.parse(data);
@@ -645,7 +649,7 @@
               {
                 infowindow.open(map, marca);
               });
-          marca.setMap(map); 
+              marca.setMap(map); 
             //funcion para marcar nueva posicion den marcador 
               map.addListener("click", function(event)
               {
@@ -696,31 +700,37 @@
               });
 
             }
-            waypoints = function(){
-                var waypoints = document.getElementById('waypoints').value;
-            $("#tableWay").html('');
-              $.post(base_url+"Inicio/get_organizaciones",
-              {
-                id_organizacion:waypoints
-              },
-      
-              function(data)
-              {
-                var p = JSON.parse(data);
+          //multi select de waypoint
+            enviarWay = function(){
+              var waypoints = $('#waypoints').val();           
+               $.ajax({
+                  type: 'POST',
+                  url: base_url+"Inicio/get_way",
+                  data:
+                  {
+                    id_organizacion:waypoints    
+                  },
+                  success: function(data)
+                  {
+         
+                   var p = JSON.parse(data);
 
                 $.each(p, function(i, item){
                   $('#tableWay').append(
                   `
                   <tr>
-                      <td><input type="hidden" name="latitudWay" id="latitudWay" value="${item.latitud}"/></td>
-                      <td><input type="hidden" name="longitudWay" id="longitudWay" value="${item.longitud}"/></td>
+                      <td><input type="text" name="" id="" value="${item.abreviacion}"/></td>                  
+                      <td><input type="hidden" name="latitudWay[]" id="latitudWay" value="${item.latitud}"/></td>
+                      <td><input type="hidden" name="longitudWay[]" id="longitudWay" value="${item.longitud}"/></td>
                   </tr>`
-                 );
-
-                });         
-              });
-
-            }
+                 );               
+                //se crean las cooredanadas de objetos para los waypoints         
+                var way = new google.maps.LatLng(item.latitud,item.longitud);
+                wayglobal.push(way)          
+                }); 
+                  }
+                });
+            } //enn function enviarway
 
             destination = function(){
                 var destination = document.getElementById('destination').value;
@@ -738,6 +748,7 @@
                   $('#tableDestination').append(
                   `
                   <tr>
+                      <td><input type="text" name="" id="" value="${item.abreviacion}"/></td>           
                       <td><input type="hidden" name="latitudEnd" id="latitudEnd" value="${item.latitud}"/></td>
                       <td><input type="hidden" name="longitudEnd" id="longitudEnd" value="${item.longitud}"/></td>
                   </tr>`
@@ -747,72 +758,96 @@
               });
 
             }
+
         calcular_waypoints = function(){
+      
           var latitudStar = $("#latitudStar").val();
           var longitudStar = $("#longitudStar").val();
-
-          var latitudWay = $("#latitudWay").val();
-          var longitudWay = $("#longitudWay").val();
-
           var latitudEnd = $("#latitudEnd").val();
           var longitudEnd = $("#longitudEnd").val();
-      //Iniciamos mapa
-        map = new google.maps.Map(document.getElementById('map'), 
-        {     
-          center: ubicacion,
-          mapTypeId:'roadmap'
-        });
-
-
-            var directionsService = new google.maps.DirectionsService;
+          if (latitudStar == "") {
+            alert("error no has marcado tu punto de partida");
+          }
+          else{
+            map = new google.maps.Map(document.getElementById('map'), 
+              {     
+                center: ubicacion,
+                mapTypeId:'roadmap'
+              });
+              var directionsService = new google.maps.DirectionsService;
             var directionsRenderer = new google.maps.DirectionsRenderer({             
               map: map,
               //suppressMarkers:true,
               panel: document.getElementById('right-panel')
             });
 
-          directionsRenderer.addListener('directions_changed', function() {
-            computeTotalDistance(directionsRenderer.getDirections());
-          });
+              directionsRenderer.addListener('directions_changed', function() {
+              computeTotalDistance(directionsRenderer.getDirections());
+            });
+            var origen = new google.maps.LatLng(latitudStar,longitudStar);
+            var destination = new google.maps.LatLng(latitudEnd,longitudEnd);
+            calculateAndDisplayRoute(directionsService, directionsRenderer, origen, destination, wayglobal);
 
-          var origin = new google.maps.LatLng(latitudStar,longitudStar);
-          var way = new google.maps.LatLng(latitudWay,longitudWay);
-          var destination = new google.maps.LatLng(latitudEnd,longitudEnd);
-      
+          }
+            //Iniciamos mapa
+             
 
-          displayRoute(origin,destination, directionsService,directionsRenderer, way);
 
-         
-        }
-            
           
- function displayRoute(origin, destination, service, display, way) {
-            service.route({
-              origin: origin,
+        } //end calcular way     
+
+
+        function calculateAndDisplayRoute(directionsService, directionsRenderer, origen, destination, wayglobal) {
+           var waypts = [];
+            for (var i = 0; i < wayglobal.length; i++) {
+              waypts.push({
+                    location: wayglobal[i],
+                    stopover: true
+                  });
+            }
+  
+            directionsService.route({
+              origin: origen,
               destination: destination,
-              waypoints: [{location:way}],
-              travelMode: 'DRIVING',
-              avoidTolls: true
-            }, 
-            function(response, status) {
+              waypoints: waypts,
+              optimizeWaypoints: true,
+              travelMode: 'DRIVING'
+            }, function(response, status) {
               if (status === 'OK') {
-                alert("es ha encontrado la ruta mas óptima");
-                display.setDirections(response);
+                alert("se encontro la mejor ruta para su viaje");
+                directionsRenderer.setDirections(response);
+                var route = response.routes[0];
+                var summaryPanel = document.getElementById('directions-panel');
+                summaryPanel.innerHTML = '';
+                // For each route, display summary information.
+                for (var i = 0; i < route.legs.length; i++) {
+                  var routeSegment = i + 1;
+                  summaryPanel.innerHTML += '<b>Ruta de segmento: ' + routeSegment +
+                      '</b><br>';
+                  summaryPanel.innerHTML += route.legs[i].start_address + ' A ';
+                  summaryPanel.innerHTML += route.legs[i].end_address + '<br>';
+                  summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
+                }
               } else {
-                alert('Lo sentimos no se ha encontrado ruta para estos lugares, intente con otros lugares...!');
+                window.alert('Error no se encotro ruta intenta de nuevo ' + status);
+  map = new google.maps.Map(document.getElementById('map'), 
+              {     
+                center: ubicacion,
+                mapTypeId:'roadmap'
+              });
               }
             });
           }
+      function computeTotalDistance(result) {
+        var total = 0;
+        var myroute = result.routes[0];
 
-          function computeTotalDistance(result) {
-            var total = 0;
-            var myroute = result.routes[0];
-            for (var i = 0; i < myroute.legs.length; i++) {
-              total += myroute.legs[i].distance.value;
-            }
-            total = total / 1000;
-            document.getElementById('total').innerHTML = total + ' km';
-          }
+        for (var i = 0; i < myroute.legs.length; i++) {
+          total += myroute.legs[i].distance.value;
+        }
+        total = total / 1000;
+        document.getElementById('total').innerHTML = total + ' km';
+      }
 </script>
    <div id="directions-panel"></div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>

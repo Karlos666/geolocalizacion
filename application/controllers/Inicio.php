@@ -10,6 +10,7 @@ class Inicio  extends CI_Controller {
 	}
 	public function index()
 	{
+
 		$data['paises']  = $this->M_base->get_paises();
 		$data['opp']  = $this->M_base->get_opp();
 			
@@ -37,6 +38,19 @@ class Inicio  extends CI_Controller {
 	public function get_organizaciones(){
 		$param['id_organizacion'] = $this->input->post('id_organizacion');
 		echo json_encode($this->M_base->get_organizaciones($param));
+
+	}
+	public function get_way(){
+
+		$id_organizacion = $this->input->post("id_organizacion");
+		
+		//error_log($id_organizacion,45,'error_log.php');
+		$way = [];
+		for ($i=0; $i < count($id_organizacion) ; $i++) { 
+			 $way =  $id_organizacion[$i];
+		}
+
+		echo json_encode($this->M_base->get_way($way));
 
 	}
 

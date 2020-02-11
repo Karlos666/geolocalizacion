@@ -22,6 +22,14 @@ class M_base extends CI_Model
         $r = $this->db->get();
         return $r->result();
     }
+     public function get_way($way)
+    {
+        $this->db->select("*");
+        $this->db->from("opp");
+        $this->db->where("id_opp", $way);
+        $r = $this->db->get();
+        return $r->result();
+    }
     public function get_marcadores_pais($param)
     {
         $this->db->select("*");
