@@ -731,11 +731,11 @@
                     $.each(p, function(i, item){
                       $('#tableWay').append(
                       `
-                      <tr id="tr-way">
+                      <tr id="${item.id_opp}" class="tr-way">
                           <td><input type="text" name="" id="" value="${item.abreviacion}"/></td>                  
                           <td><input type="hidden" name="latitudWay[]" id="latitudWay" value="${item.latitud}"/></td>
                           <td><input type="hidden" name="longitudWay[]" id="longitudWay" value="${item.longitud}"/></td>
-                          <td><button id="quitar">Quitar</button></td>
+                          <td><button id="quitar" onclick="quitar(${item.id_opp});">Quitar</button></td>
 
                       </tr>`
                      );               
@@ -749,6 +749,13 @@
                     
               }//end else
             } //enn function enviarway
+
+            quitar = function(id_opp){
+              document.getElementById("latitudWay").value = null;
+              document.getElementById("longitudWay").value = null;
+              $("#"+id_opp).remove();
+
+            }
 
             destination = function(){
                 var destination = document.getElementById('destination').value;
@@ -778,6 +785,7 @@
             }
 
         calcular_waypoints = function(){
+
   
           var pais_waypoints = $("#pais_waypoints");
           var latitudStar = $("#latitudStar").val();
@@ -859,8 +867,99 @@
                   summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
                 }
               } else {
-                window.alert('No hemos encontrado una ruta Intenta de nuevo con nuevas ubicaciones');
-                location.reload(); 
+                alert('No hemos encontrado una ruta Intenta de nuevo con nuevas ubicaciones');
+
+        var pais_waypoints = document.getElementById('pais_waypoints').value;
+                 //Iniciamos mapa
+        map = new google.maps.Map(document.getElementById('map'), 
+        {     
+          center: ubicacion,
+          mapTypeId:'roadmap'
+        });
+
+        $("#started").html('');
+        $("#started").html('<option value="">Seleciona tu origen</option>');
+        $("#waypoints").html('');
+        $("#waypoints").html('<option value="">Seleciona puntos intermedios</option>');
+        $("#destination").html('');
+        $("#destination").html('<option value="">Seleciona tu destino</option>');
+        $.post(base_url+"Inicio/get_marcadores_pais",
+        {
+          id_pais:pais_waypoints
+        },
+
+        function(data)
+          {
+            var p = JSON.parse(data);
+            $.each(p, function(i, item){
+              var infowindow = new google.maps.InfoWindow
+              ({
+                content:item.abreviacion,
+                maxWidth: 200
+              });
+              var posi = new google.maps.LatLng(item.latitud, item.longitud);             
+              var marca = new google.maps.Marker
+              ({       
+                position:posi,
+                animation: google.maps.Animation.DROP,
+                icon:icon_SPP
+              });  
+              map.setZoom(5);
+              var centrar = new google.maps.LatLng(item.latitude, item.longitude);
+              map.setCenter(centrar);
+              google.maps.event.addListener(marca,"click", function()
+              {
+                infowindow.open(map, marca);
+              });
+              marca.setMap(map); 
+            //funcion para marcar nueva posicion den marcador 
+              map.addListener("click", function(event)
+              {
+                var coordenadas = event.latLng.toString();
+                coordenadas = coordenadas.replace("(","");
+                coordenadas = coordenadas.replace(")","");
+                var lista = coordenadas.split(",");
+                var direcion = new google.maps.LatLng(lista[0], lista[1]);
+                var origen = 'https://chart.googleapis.com/chart?' +
+                'chst=d_map_pin_letter&chld=O|FFFF00|000000'
+                var marcador = new google.maps.Marker
+                ({
+                  position:direcion,
+                  map:map,
+                  icon:origen,
+                  animation:google.maps.Animation.DROP,
+                  draggable:false
+                });
+
+            
+                form_star.find("input[name='latitudStar']").val(lista[0]);
+                form_star.find("input[name='longitudStar']").val(lista[1]);
+                punto_partida.push(marcador);
+                quitar_marcadores(punto_partida);
+                marcador.setMap(map);      
+              });// en function
+
+
+       
+                if (item.latitud != null) {
+                  $('#waypoints').append(
+                     `<option value="${item.id_opp}">
+                                         
+                        ${item.abreviacion}        
+                     </option>`
+                    );
+               }  
+                if (item.latitud != null) {
+                  $('#destination').append(
+                     `<option value="${item.id_opp}">
+          
+                        ${item.abreviacion}        
+                     </option>`
+                    );
+               }       
+
+                });         
+              });
               }
             });
           }
