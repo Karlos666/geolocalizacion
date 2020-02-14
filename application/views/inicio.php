@@ -137,7 +137,10 @@
           <select id = "pais_waypoints" onchange="search_waypoints()">
             <option value="" selected="">:::Paises:::</option>        
             <?php foreach ($paises as $pais) {?>
-              <option value="<?php echo $pais->id;?>"><?php echo $pais->nombre_pais;?></option>
+              <?php if ($pais->total > 3) {?>
+                <option value="<?php echo $pais->id;?>"><?php echo $pais->nombre_pais;?></option>
+              <?php }?>
+              
             <?php } ?> 
           </select><br><br>
 
@@ -528,6 +531,9 @@
             }, 
 
             function(response, status) {          
+                 if (status !== 'OK') {} 
+                  else
+                  {
                 var originList = response.originAddresses;
                 var destinationList = response.destinationAddresses;
                 deleteMarkers(markersArray);
@@ -543,6 +549,8 @@
                   
                   }//end for
                 }//end for
+                
+              }
               
             });
           }); //end each
@@ -702,34 +710,44 @@
             }
           //multi select de waypoint
             enviarWay = function(){
-              var waypoints = $('#waypoints').val();           
-               $.ajax({
-                  type: 'POST',
-                  url: base_url+"Inicio/get_way",
-                  data:
-                  {
-                    id_organizacion:waypoints    
-                  },
-                  success: function(data)
-                  {
-         
-                   var p = JSON.parse(data);
+              var waypoints = $('#waypoints').val(); 
+                if(waypoints == ""){
+                  alert("Selecciona almenos una organizacion como punto intermedio");
 
-                $.each(p, function(i, item){
-                  $('#tableWay').append(
-                  `
-                  <tr>
-                      <td><input type="text" name="" id="" value="${item.abreviacion}"/></td>                  
-                      <td><input type="hidden" name="latitudWay[]" id="latitudWay" value="${item.latitud}"/></td>
-                      <td><input type="hidden" name="longitudWay[]" id="longitudWay" value="${item.longitud}"/></td>
-                  </tr>`
-                 );               
-                //se crean las cooredanadas de objetos para los waypoints         
-                var way = new google.maps.LatLng(item.latitud,item.longitud);
-                wayglobal.push(way)          
-                }); 
-                  }
-                });
+                }   
+                else{     
+                   $.ajax({
+                      type: 'POST',
+                      url: base_url+"Inicio/get_way",
+                      data:
+                      {
+                        id_organizacion:waypoints    
+                      },
+                      success: function(data)
+                      {
+             
+                       var p = JSON.parse(data);
+
+                    $.each(p, function(i, item){
+                      $('#tableWay').append(
+                      `
+                      <tr id="tr-way">
+                          <td><input type="text" name="" id="" value="${item.abreviacion}"/></td>                  
+                          <td><input type="hidden" name="latitudWay[]" id="latitudWay" value="${item.latitud}"/></td>
+                          <td><input type="hidden" name="longitudWay[]" id="longitudWay" value="${item.longitud}"/></td>
+                          <td><button id="quitar">Quitar</button></td>
+
+                      </tr>`
+                     );               
+                    //se crean las cooredanadas de objetos para los waypoints         
+                    var way = new google.maps.LatLng(item.latitud,item.longitud);
+                    wayglobal.push(way)  
+                          
+                    }); 
+                      }
+                    });//end Ajax
+                    
+              }//end else
             } //enn function enviarway
 
             destination = function(){
@@ -760,14 +778,26 @@
             }
 
         calcular_waypoints = function(){
-      
+  
+          var pais_waypoints = $("#pais_waypoints");
           var latitudStar = $("#latitudStar").val();
           var longitudStar = $("#longitudStar").val();
           var latitudEnd = $("#latitudEnd").val();
           var longitudEnd = $("#longitudEnd").val();
-          if (latitudStar == "") {
+         
+          if(pais_waypoints === undefined){
+            alert("No has seleccionado ningun pais");
+          }
+         else if (latitudStar == "") {
             alert("error no has marcado tu punto de partida");
           }
+           else if(wayglobal == ""){
+            alert("Debes de seleccionar almenos un punto intermedio para poder marcar una ruta");
+          }
+          else if(latitudEnd == undefined){ 
+            alert("error no has marcado tu destino");  
+          }
+
           else{
             map = new google.maps.Map(document.getElementById('map'), 
               {     
@@ -829,12 +859,8 @@
                   summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
                 }
               } else {
-                window.alert('Error no se encotro ruta intenta de nuevo ' + status);
-  map = new google.maps.Map(document.getElementById('map'), 
-              {     
-                center: ubicacion,
-                mapTypeId:'roadmap'
-              });
+                window.alert('No hemos encontrado una ruta Intenta de nuevo con nuevas ubicaciones');
+                location.reload(); 
               }
             });
           }

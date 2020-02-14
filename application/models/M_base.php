@@ -41,7 +41,7 @@ class M_base extends CI_Model
     }
     public function get_paises()
     {
-        $this->db->select("p.id_pais as id, p.nombre as nombre_pais");
+        $this->db->select("p.id_pais as id, p.nombre as nombre_pais, count(id_opp) as total");
         $this->db->from("pais p");
         $this->db->join("opp o", "id_pais = fk_id_pais");
         $this->db->group_by("p.id_pais");
