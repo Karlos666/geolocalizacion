@@ -42,9 +42,7 @@ class Inicio  extends CI_Controller {
 	}
 	public function get_way(){
 
-		$id_organizacion = $this->input->post("id_organizacion");
-		
-		//error_log($id_organizacion,45,'error_log.php');
+		$id_organizacion = $this->input->post("id_organizacion");		
 		$way = [];
 		for ($i=0; $i < count($id_organizacion) ; $i++) { 
 			 $way =  $id_organizacion[$i];

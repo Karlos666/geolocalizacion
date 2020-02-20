@@ -796,7 +796,7 @@
        
                 if (item.latitud != null) {
                   $('#waypoints').append(
-                     `<option value="${item.id_opp}">
+                     `<option id="way_${item.id_opp}" value="${item.id_opp}">
                                          
                         ${item.abreviacion}        
                      </option>`
@@ -839,6 +839,7 @@
                        var p = JSON.parse(data);
 
                     $.each(p, function(i, item){
+                
                       $('#tableWay').append(
                       `
                       <tr id="${item.id_opp}" class="tr-way">
@@ -850,19 +851,12 @@
                       </tr>`
                      );               
                     //se crean las cooredanadas de objetos para los waypoints 
-                 
-
-                    way = new google.maps.LatLng(item.latitud,item.longitud);
-                    wayglobal.push(way);
-
-
-              
-
-                          
+                      way = new google.maps.LatLng(item.latitud,item.longitud);
+                      wayglobal.push(way);
+                      $('#waypoints option[value="'+item.id_opp+'"]').remove();
                     }); 
                       }
                     });//end Ajax
-                    
               }//end else
             } //enn function enviarway
 
@@ -873,12 +867,28 @@
                     for (var i = 0; i < wayglobal.length; i++) {
                       if(JSON.stringify(wayglobal[i]) === JSON.stringify(quitarway)){
                         wayglobal.splice(i, 1);
-                        console.log("el array:" + wayglobal);
+                     
                       }
 
-            }
+            } 
+            $("#"+id_opp).remove();
+
+            $.post(base_url+"Inicio/get_organizaciones",
+              {
+                id_organizacion:id_opp
+              },
+      
+              function(data)
+              {
+                var p = JSON.parse(data);
+
+                $.each(p, function(i, item){
+                  $("#waypoints").append('<option value="'+id_opp+'">'+item.abreviacion+'</option>');
+               
+
+                });         
+              });
             
-              $("#"+id_opp).remove();
 
             }
 
@@ -961,6 +971,7 @@
 
 
         function calculateAndDisplayRoute(directionsService, directionsRenderer, origen, destination, wayglobal) {
+          var form_star1 = $("#form-star");
            var waypts = [];
             for (var i = 0; i < wayglobal.length; i++) {
               waypts.push({
@@ -994,99 +1005,100 @@
               } else {
                 alert('No hemos encontrado una ruta Intenta de nuevo con nuevas ubicaciones');
 
-        var pais_waypoints = document.getElementById('pais_waypoints').value;
-                 //Iniciamos mapa
-        map = new google.maps.Map(document.getElementById('map'), 
-        {     
-          center: ubicacion,
-          mapTypeId:'roadmap'
-        });
-
-        $("#started").html('');
-        $("#started").html('<option value="">Seleciona tu origen</option>');
-        $("#waypoints").html('');
-        $("#waypoints").html('<option value="">Seleciona puntos intermedios</option>');
-        $("#destination").html('');
-        $("#destination").html('<option value="">Seleciona tu destino</option>');
-        $.post(base_url+"Inicio/get_marcadores_pais",
-        {
-          id_pais:pais_waypoints
-        },
-
-        function(data)
-          {
-            var p = JSON.parse(data);
-            $.each(p, function(i, item){
-              var infowindow = new google.maps.InfoWindow
-              ({
-                content:item.abreviacion,
-                maxWidth: 200
-              });
-              var posi = new google.maps.LatLng(item.latitud, item.longitud);             
-              var marca = new google.maps.Marker
-              ({       
-                position:posi,
-                animation: google.maps.Animation.DROP,
-                icon:icon_SPP
-              });  
-              map.setZoom(5);
-              var centrar = new google.maps.LatLng(item.latitude, item.longitude);
-              map.setCenter(centrar);
-              google.maps.event.addListener(marca,"click", function()
-              {
-                infowindow.open(map, marca);
-              });
-              marca.setMap(map); 
-            //funcion para marcar nueva posicion den marcador 
-              map.addListener("click", function(event)
-              {
-                var coordenadas = event.latLng.toString();
-                coordenadas = coordenadas.replace("(","");
-                coordenadas = coordenadas.replace(")","");
-                var lista = coordenadas.split(",");
-                var direcion = new google.maps.LatLng(lista[0], lista[1]);
-                var origen = 'https://chart.googleapis.com/chart?' +
-                'chst=d_map_pin_letter&chld=O|FFFF00|000000'
-                var marcador = new google.maps.Marker
-                ({
-                  position:direcion,
-                  map:map,
-                  icon:origen,
-                  animation:google.maps.Animation.DROP,
-                  draggable:false
-                });
-
-            
-                form_star.find("input[name='latitudStar']").val(lista[0]);
-                form_star.find("input[name='longitudStar']").val(lista[1]);
-                punto_partida.push(marcador);
-                quitar_marcadores(punto_partida);
-                marcador.setMap(map);      
-              });// en function
-
-
-       
-                if (item.latitud != null) {
-                  $('#waypoints').append(
-                     `<option value="${item.id_opp}">
-                                         
-                        ${item.abreviacion}        
-                     </option>`
-                    );
-               }  
-                if (item.latitud != null) {
-                  $('#destination').append(
-                     `<option value="${item.id_opp}">
-          
-                        ${item.abreviacion}        
-                     </option>`
-                    );
-               }       
-
-                });         
-              });
-              }
+            var pais_waypoints = document.getElementById('pais_waypoints').value;
+                     //Iniciamos mapa
+            map = new google.maps.Map(document.getElementById('map'), 
+            {     
+              center: ubicacion,
+              mapTypeId:'roadmap'
             });
+
+            $("#started").html('');
+            $("#started").html('<option value="">Seleciona tu origen</option>');
+            $("#waypoints").html('');
+            $("#waypoints").html('<option value="">Seleciona puntos intermedios</option>');
+            $("#destination").html('');
+            $("#destination").html('<option value="">Seleciona tu destino</option>');
+            $.post(base_url+"Inicio/get_marcadores_pais",
+            {
+              id_pais:pais_waypoints
+            },
+
+            function(data)
+              {
+                var p = JSON.parse(data);
+                $.each(p, function(i, item){
+                  var infowindow = new google.maps.InfoWindow
+                  ({
+                    content:item.abreviacion,
+                    maxWidth: 200
+                  });
+                  var posi = new google.maps.LatLng(item.latitud, item.longitud);             
+                  var marca = new google.maps.Marker
+                  ({       
+                    position:posi,
+                    animation: google.maps.Animation.DROP,
+                    icon:icon_SPP
+                  });  
+                  map.setZoom(5);
+                  var centrar = new google.maps.LatLng(item.latitude, item.longitude);
+                  map.setCenter(centrar);
+                  google.maps.event.addListener(marca,"click", function()
+                  {
+                    infowindow.open(map, marca);
+                  });
+                  marca.setMap(map); 
+
+                //funcion para marcar nueva posicion den marcador 
+                  map.addListener("click", function(event)
+                  {
+                    var coordenadas = event.latLng.toString();
+                    coordenadas = coordenadas.replace("(","");
+                    coordenadas = coordenadas.replace(")","");
+                    var lista = coordenadas.split(",");
+                    var direcion = new google.maps.LatLng(lista[0], lista[1]);
+                    var origen = 'https://chart.googleapis.com/chart?' +
+                    'chst=d_map_pin_letter&chld=O|FFFF00|000000'
+                    var marcador = new google.maps.Marker
+                    ({
+                      position:direcion,
+                      map:map,
+                      icon:origen,
+                      animation:google.maps.Animation.DROP,
+                      draggable:false
+                    });
+
+                
+                    form_star1.find("input[name='latitudStar']").val(lista[0]);
+                    form_star1.find("input[name='longitudStar']").val(lista[1]);
+                    punto_partida.push(marcador);
+                    quitar_marcadores(punto_partida);
+                    marcador.setMap(map);      
+                  });// en function
+
+
+           
+                    if (item.latitud != null) {
+                      $('#waypoints').append(
+                         `<option value="${item.id_opp}">
+                                             
+                            ${item.abreviacion}        
+                         </option>`
+                        );
+                   }  
+                    if (item.latitud != null) {
+                      $('#destination').append(
+                         `<option value="${item.id_opp}">
+              
+                            ${item.abreviacion}        
+                         </option>`
+                        );
+                   }       
+
+                    });         
+                  });
+                  }
+                });
           }
       function computeTotalDistance(result) {
         var total = 0;
