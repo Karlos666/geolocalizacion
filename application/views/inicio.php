@@ -188,10 +188,6 @@
   var icon_SPP = "<?php echo base_url('img/icon-SPP.png')?>";
   var wayglobal = [];
   var way;
-  var itemLat;
-  var itenLng;
-  var wayglobalLat = [];
-  var wayglobalLng = [];
   //var formulario = $("#formulario");
   function quitar_marcadores(lista)
   {
@@ -820,6 +816,8 @@
           //multi select de waypoint
             enviarWay = function(){
               var waypoints = $('#waypoints').val(); 
+       
+
                 if(waypoints == ""){
                   alert("Selecciona almenos una organizacion como punto intermedio");
 

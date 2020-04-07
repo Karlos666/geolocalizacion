@@ -88,6 +88,9 @@
     <div id="directions-panel"></div>
     </div>
     <script>
+        var pizza = "porción1 porción2 porción3 porción4 porción5 porción6";
+          var porciones = pizza.split(' ');
+          console.log(porciones[2]); //porción3
       function initMap() {
         var directionsService = new google.maps.DirectionsService;
         var directionsRenderer = new google.maps.DirectionsRenderer;
@@ -144,6 +147,10 @@
           }
         });
       }
+
+
+    
+
     </script>
      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCqBKjIObP2dJsSZCMNOSgj_Jy2BGG18DA&libraries=places&callback=initMap"></script>
 
